@@ -4,15 +4,16 @@ import * as model from './model.js';
 import recipeView from './views/recipeView.js';
 import searchView from './views/searchView.js';
 import resultsView from './views/resultsView';
+import paginationView from './views/paginationView';
 
 // import knihoven pro asynchronni JS
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
 // Parcel feature, that does not reload the page if change is made in the code. Useful for development.
-if (module.hot) {
-  module.hot.accept();
-}
+// if (module.hot) {
+//   module.hot.accept();
+// }
 
 ///////////////////////////////////////
 
@@ -53,10 +54,11 @@ const controlSearchResults = async function() {
     // 2) Load search results
     await model.loadSearchResults(query);
     
-    // 3) Render results
-    console.log(model.state.search.results);
-    
-    resultsView.render(model.state.search.results);
+    // 3) Render results    
+    resultsView.render(model.getSearchResultsPage());
+
+    // 4) Render initial pagination buttons
+    paginationView.render(model.state.search);    
     
   } catch(err) {
     console.log(err);
@@ -65,12 +67,22 @@ const controlSearchResults = async function() {
   
 }
 
+const controlPagination = function (gotopage) {
+  // 1} Render new results and also set page to gotopage value
+  resultsView.render(model.getSearchResultsPage(gotopage));
+  
+  // 2) Render new pagination buttons
+  paginationView.render(model.state.search);  
+  
+};
+
 controlSearchResults();
 
 const init = function() {
   // event handling v MVC pres publisher-subscriber pattern: event listener ma jako parametr fci, ktera je event handler
   recipeView.addHandlerRender(controlRecipes);
   searchView.addHandlerSearch(controlSearchResults);
+  paginationView.addHandlerClick(controlPagination);
 }
 
 init();
