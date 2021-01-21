@@ -1,21 +1,14 @@
 // import vseho (defaultni) z modulu Model
 import * as model from './model.js';
-// import instance classy RecipeView
+// import instance classy RecipeView atd.
 import recipeView from './views/recipeView.js';
+import searchView from './views/searchView.js';
+
 
 // import knihoven pro asynchronni JS
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
-const recipeContainer = document.querySelector('.recipe');
-
-const timeout = function (s) {
-  return new Promise(function (_, reject) {
-    setTimeout(function () {
-      reject(new Error(`Request took too long! Timeout after ${s} second`));
-    }, s * 1000);
-  });
-};
 
 ///////////////////////////////////////
 
@@ -38,18 +31,37 @@ const controlRecipes = async function() {
     // 2) Rendering recipe   
     recipeView.render(model.state.recipe);
   } catch(err) {
-    // alert(err.message);
-    console.error(err);    
+    console.error(`${err} 🔥🔥🔥`);
+    recipeView.renderError();
   }
 }
 
-// ? Toto najednou vyhazuje chybu: controller.3560e144.js:512 Uncaught TypeError: Cannot read property 'forEach' of undefined
-    // at Object.175e469a7ea7db1c8c0744d04372621f.core-js/modules/es.typed-array.float32-array.js (controller.3560e144.js:512)
-    // at newRequire (controller.3560e144.js:68)
-    // at controller.3560e144.js:111
-    // at controller.3560e144.js:134
-// ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, controlRecipes));
+const controlSearchResults = async function() {
+  try {
+    // 1) Get search query
+    const query = searchView.getQuery();
 
-window.addEventListener('hashchange', controlRecipes);
-window.addEventListener('load', controlRecipes);
+    if (!query) return;
 
+    // 2) Load search results
+    await model.loadSearchResults(query);
+    
+    // 3) Render results
+    console.log(model.state.search);
+    
+  } catch(err) {
+    console.log(err);
+    
+  }
+  
+}
+
+controlSearchResults();
+
+const init = function() {
+  // event handling v MVC pres publisher-subscriber pattern: event listener ma jako parametr fci, ktera je event handler
+  recipeView.addHandlerRender(controlRecipes);
+  searchView.addHandlerSearch(controlSearchResults);
+}
+
+init();

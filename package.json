@@ -10,6 +10,9 @@
   "author": "Honza Hrbacek",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "babel-loader": "^7.1.5",
     "parcel": "^2.0.0-beta.1",
     "sass": "^1.32.4"
   },

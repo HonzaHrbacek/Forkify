@@ -1,20 +1,22 @@
 import { async } from "regenerator-runtime"
+import { API_URL } from "./config";
+import {getJSON} from './helpers.js';
 
 // state mi zachycuje aktualni stav aplikace pro recipe (vybrany recept), search results a bookmarks
 export const state = {
 
   recipe: {},
+  search: {
+    query: '',
+    results: []
+  },
 
 }
 
 export const loadRecipe = async function(id) {
 try {
-  const res = await fetch(`https://forkify-api.herokuapp.com/api/v2/recipes/${id}`);
-      
-  // odpoved si prectu pomoci metody json()
-  const data = await res.json();
-  
-  if (!res.ok) throw new Error(`${data.message} (Response status: ${res.status})`);
+  // fce getJOSN vraci promise, takze ji musime awaitovat
+  const data = await getJSON(`${API_URL}${id}`);
   
   // destructuring property/objektu recipe
   let {recipe} = data.data;
@@ -32,8 +34,33 @@ try {
   }
   // console.log(state.recipe);
 } catch(err) {
-  console.error(err);
-  // alert(err);  
+  //aby se err objekt dostal do controlleru, musime opet provest throw
+  throw err;
+}
 }
 
+export const loadSearchResults = async function(query) {
+  try {
+
+    state.search.query = query;
+    const data = await getJSON(`${API_URL}?search=${query}`);
+  
+    // console.log(data.data.recipes);
+    
+    state.search.results = data.data.recipes.map(rec => {
+      return {
+        id: rec.id,
+        title: rec.title,
+        publisher: rec.publisher,
+        image: rec.image_url
+      };
+    }
+    );
+  
+  } catch(err) {
+    console.log(err);
+    
+    throw err;
+  }
 }
+
