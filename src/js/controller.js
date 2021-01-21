@@ -1,9 +1,11 @@
+// import vseho (defaultni) z modulu Model
 import * as model from './model.js';
+// import instance classy RecipeView
 import recipeView from './views/recipeView.js';
 
+// import knihoven pro asynchronni JS
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-// import { loadRecipe } from './model.js';
 
 const recipeContainer = document.querySelector('.recipe');
 

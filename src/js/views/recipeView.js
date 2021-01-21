@@ -2,23 +2,26 @@ import icons from 'url:../../img/icons.svg';
 // toto formatovani se mi moc nelibi...
 // import {Fraction} from 'fractional';
 
+// kazde view ma vlastni tridu
 class RecipeView {
-  // kazda trida ma soukromou propery definujici jeji parent element
+  // kazda trida ma soukrome vlastnosti definujici jeji parent element a data, ktera ma zobrazovat
   #parentElement = document.querySelector('.recipe');
   #data;
 
   //public API metoda vykreslujici recept do UI
   render(data) {
     this.#data = data;
+    // vygeneruji si markup (anotaci receptu)
     const markup = this.#generateMarkup();
+    //vycistim si parent element
     this.#clear();
+    //zobrazim markup v parent element
     this.#parentElement.insertAdjacentHTML('afterbegin', markup);
   }
   
   #clear() {    
     this.#parentElement.innerHTML = '';
   }
-
 
   renderSpinner() {
     const markup = `<div class="spinner">
@@ -30,9 +33,7 @@ class RecipeView {
     this.#parentElement.insertAdjacentHTML('afterbegin', markup);
   }
 
-  #generateMarkup() {
-    // console.log(this.#data);
-    
+  #generateMarkup() {    
     return `<figure class="recipe__fig">
     <img src="${this.#data.image}" alt="${this.#data.title}" class="recipe__img" />
     <h1 class="recipe__title">
@@ -84,7 +85,7 @@ class RecipeView {
   <div class="recipe__ingredients">
     <h2 class="heading--2">Recipe ingredients</h2>
     <ul class="recipe__ingredient-list">
-      
+            
       ${this.#data.ingredients.map(this.#generateMarkupIngredients).join(' ')}
 
     </ul>
@@ -112,6 +113,8 @@ class RecipeView {
 
   #generateMarkupIngredients(ing) {
     
+      // markup,kde je mnozstvu vygenerovano pomoci knihovny Fraction (napr. 1/2 cup).. asi se mi vice libi zapis s desetinnou teckou...
+      
       // return `<li class="recipe__ingredient">
       //   <svg class="recipe__icon">
       //     <use href="${icons}#icon-check"></use>
@@ -122,6 +125,7 @@ class RecipeView {
       //     ${ing.description}
       //   </div>
       // </li>`;
+
       return `<li class="recipe__ingredient">
         <svg class="recipe__icon">
           <use href="${icons}#icon-check"></use>
@@ -136,4 +140,5 @@ class RecipeView {
   
 }
 
+// export instance do controlleru
 export default new RecipeView();
