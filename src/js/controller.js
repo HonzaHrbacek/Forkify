@@ -3,17 +3,22 @@ import * as model from './model.js';
 // import instance classy RecipeView atd.
 import recipeView from './views/recipeView.js';
 import searchView from './views/searchView.js';
-
+import resultsView from './views/resultsView';
 
 // import knihoven pro asynchronni JS
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
+// Parcel feature, that does not reload the page if change is made in the code. Useful for development.
+if (module.hot) {
+  module.hot.accept();
+}
 
 ///////////////////////////////////////
 
 // Load and render recipe
 const controlRecipes = async function() {
+
   try {
     // kazdy recept ma v url hash ve tvaru #id; takto ziskame pouze id
     const id = window.location.hash.slice(1);
@@ -43,11 +48,15 @@ const controlSearchResults = async function() {
 
     if (!query) return;
 
+    resultsView.renderSpinner();
+
     // 2) Load search results
     await model.loadSearchResults(query);
     
     // 3) Render results
-    console.log(model.state.search);
+    console.log(model.state.search.results);
+    
+    resultsView.render(model.state.search.results);
     
   } catch(err) {
     console.log(err);

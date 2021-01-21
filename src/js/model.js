@@ -1,6 +1,6 @@
 import { async } from "regenerator-runtime"
 import { API_URL } from "./config";
-import {getJSON} from './helpers.js';
+import { getJSON, RES_PER_PAGE } from './helpers.js';
 
 // state mi zachycuje aktualni stav aplikace pro recipe (vybrany recept), search results a bookmarks
 export const state = {
@@ -8,8 +8,9 @@ export const state = {
   recipe: {},
   search: {
     query: '',
-    results: []
-  },
+    results: [],
+    resultsPerPage = RES_PER_PAGE
+  } 
 
 }
 
@@ -62,5 +63,12 @@ export const loadSearchResults = async function(query) {
     
     throw err;
   }
+}
+
+export const getSearchResultsPage = function (page) {
+  const start = (page - 1) * state.search.resultsPerPage;
+  const end = page * state.search.resultsPerPage;
+  
+  return state.search.results.slice(start, end);
 }
 
