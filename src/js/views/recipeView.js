@@ -1,20 +1,44 @@
+// importujeme parent class a svg ikony
 import View from './View.js';
 import icons from 'url:../../img/icons.svg';
-// toto formatovani se mi moc nelibi...
+
+// toto doporucene formatovani se mi moc nelibi...
 // import {Fraction} from 'fractional';
 
-// kazde view ma vlastni tridu
+// kazde view ma vlastni sub classu
 class RecipeView extends View {
-  // kazda trida ma soukrome vlastnosti definujici jeji parent element a data, ktera ma zobrazovat
+  // Kazda classa ma soukrome vlastnosti definujici jeji parent element a hlasky
   _parentElement = document.querySelector('.recipe');
-  _errorMessage = 'We could not find that recipe. Please try another one 😉'
-  _message = 'Yesssss 😘'
-  
+  _errorMessage = 'We could not find that recipe. Please try another one ;)'
+  _message = 'Yesssss 😘'  
+  // Data, ktera ma zobrazovat (vlastnost _data) a dalsi metody zdedi od parent classy View
  
+  // Publisher fce, ktera nasloucha eventum hashchange a load a jako parametr ma event handler fci. Je volana fci init v controlleru, kde je jako event handler fce nastavena controlRecipes. Takto jde osetrit eventy v MVC architekture.
   addHandlerRender(handler) {
     ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler)); 
   }
 
+  addHandlerUpdateServings(handler) {
+      this._parentElement.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn--update-servings');
+        if (!btn) return;
+        // Hodnota, na kterou chce uzivatel aktualizovat pocet porci. Ziskana z data atributu na buttonu
+        const { updateTo } = btn.dataset;
+        // Minimalni pocet porci je 1
+        if (+updateTo >= 1) handler(+updateTo);
+      });
+    
+  }
+
+  addHandlerUpdateBookmarks(handler) {
+    this._parentElement.addEventListener('click', function(e) {
+      const btn = e.target.closest('.btn--bookmark');
+      if (!btn) return;      
+      handler();
+    })
+  }
+
+  // Tato fce dynamicky generuje markup v danem view (zde anotaci k vybranemu receptu).
   _generateMarkup() {    
     return `<figure class="recipe__fig">
     <img src="${this._data.image}" alt="${this._data.title}" class="recipe__img" />
@@ -39,34 +63,38 @@ class RecipeView extends View {
       <span class="recipe__info-text">servings</span>
 
       <div class="recipe__info-buttons">
-        <button class="btn--tiny btn--increase-servings">
-          <svg>
-            <use href="${icons}#icon-minus-circle"></use>
-          </svg>
-        </button>
-        <button class="btn--tiny btn--increase-servings">
-          <svg>
-            <use href="${icons}#icon-plus-circle"></use>
-          </svg>
-        </button>
-      </div>
+      <button class="btn--tiny btn--update-servings" data-update-to="${
+        this._data.servings - 1
+      }">
+        <svg>
+          <use href="${icons}#icon-minus-circle"></use>
+        </svg>
+      </button>
+      <button class="btn--tiny btn--update-servings" data-update-to="${
+        this._data.servings + 1
+      }">
+        <svg>
+          <use href="${icons}#icon-plus-circle"></use>
+        </svg>
+      </button>
+    </div>
     </div>
 
     <div class="recipe__user-generated">
 
     </div>
-    <button class="btn--round">
+    <button class="btn--round btn--bookmark">
       <svg class="">
-        <use href="${icons}#icon-bookmark-fill"></use>
+        <use href="${icons}#icon-bookmark${this._data.bookmarked ? '-fill' : ''}"></use>
       </svg>
     </button>
   </div>
 
   <div class="recipe__ingredients">
     <h2 class="heading--2">Recipe ingredients</h2>
-    <ul class="recipe__ingredient-list">
-            
-      ${this._data.ingredients.map(this._generateMarkupIngredients).join(' ')}
+    <ul class="recipe__ingredient-list">         
+     
+    ${this._data.ingredients.map(this._generateMarkupIngredients).join(' ')}
 
     </ul>
   </div>
@@ -91,6 +119,7 @@ class RecipeView extends View {
   </div>`;  
   }
 
+  // Pouze pro lepsi citelnost kodu je generovani markupu ingredienci v samostatne fci.
   _generateMarkupIngredients(ing) {
     
       // markup,kde je mnozstvu vygenerovano pomoci knihovny Fraction (napr. 1/2 cup).. asi se mi vice libi zapis s desetinnou teckou...
@@ -120,5 +149,5 @@ class RecipeView extends View {
   
 }
 
-// export instance do controlleru
+// Export instance do controlleru
 export default new RecipeView();
