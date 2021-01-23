@@ -6,6 +6,8 @@ import searchView from './views/searchView.js';
 import resultsView from './views/resultsView.js';
 import paginationView from './views/paginationView.js';
 import bookmarksView from './views/bookmarksView.js';
+import addRecipeView from './views/addRecipeView.js';
+import { TIMEOUT_WINDOW_SEC} from "./config";
 
 // import knihoven pro asynchronni JS
 import 'core-js/stable';
@@ -105,25 +107,74 @@ const controlUpdateBookmarks = function () {
   bookmarksView.render(model.state.bookmarks);
 }
 
+// Po nahrani stranky se vykresli bookmakView
 const controlBookmarks = function () {
   bookmarksView.render(model.state.bookmarks);
+}
+
+// Prijeme formular z addRecipeView a nechame jej nahrat do API
+const controlAddRecipe = async function(newRecipe) {
+  try {
+    // Show loading spinner
+    addRecipeView.renderSpinner();
+
+    // Upload new recipe data
+    await model.uploadRecipe(newRecipe);
+    console.log(model.state.recipe);
+    
+    // Render recipe to recipe view
+    recipeView.render(model.state.recipe);
+
+    // Render success message
+    addRecipeView.renderMessage();
+
+    // Render bookmarks view (Vkladame novy element, proto nestaci udelat update. Ten funguje pouze v pripade, ze pocet elementu je shodny)
+    bookmarksView.render(model.state.bookmarks);
+
+    //Change ID in the url
+    window.history.pushState(null, '', `#${model.state.recipe.id}`);
+
+    // Automatically close form after timeout
+    setTimeout(function () {
+      addRecipeView.toggleWindow();
+    }, TIMEOUT_WINDOW_SEC * 1000);
+    
+    // This will reload the page and the form will appear in HTML again after timeout
+    setTimeout(function () {
+      location.reload();
+    }, TIMEOUT_WINDOW_SEC * 1000);
+   
+    
+  } catch(err) {
+    console.log('🔥', err);
+    addRecipeView.renderError(err.message);
+  }
 }
 
 const init = function() {
   // Event handling v MVC pres publisher-subscriber pattern: event listener ma jako parametr fci, ktera je event handler
   
-  // Po kliknuti na search button se zobrazi recepty dle zadaneho query
+  // Po nahrani stranky se vykresli bookmakView
   bookmarksView.addHandlerRender(controlBookmarks);
+  
   // Preview receptu se zobrazi pri hashchange v url nebo pri reloadu stranky
   recipeView.addHandlerRender(controlRecipes);
+  
   // Pridavani/odebirani servings (porci)
   recipeView.addHandlerUpdateServings(controlUpdateServings);
+  
   // Pridani/odebirani bookmarku
   recipeView.addHandlerUpdateBookmarks(controlUpdateBookmarks);
+  
   // Po kliknuti na search button se zobrazi recepty dle zadaneho query
   searchView.addHandlerSearch(controlSearchResults);
+  
   // Defaultne se zobrazi prvni stranka s moznosti prejit na druou stranku (pokud existuje vice nez RES_PER_PAGE receptu). Po klinuti na paginacni tlacitka se zobrazi patricna cast vyhledanych receptu a spravna tlacitka podle toho, v jake casti seznamu se uzivatel nachazi (prvni stranka, posledni stranka, ...)
   paginationView.addHandlerClick(controlPagination);
+
+  // Pri odeslani formulare se spusti fce controlRecipe
+  addRecipeView.addHandlerUpload(controlAddRecipe);
+  
 }
 
 init();

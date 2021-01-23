@@ -1,6 +1,6 @@
 import { async } from "regenerator-runtime"
-import { API_URL, RES_PER_PAGE } from "./config";
-import { getJSON } from './helpers.js';
+import { API_URL, RES_PER_PAGE, KEY } from "./config";
+import { AJAX } from './helpers.js';
 
 // state mi zachycuje aktualni stav aplikace pro recipe (vybrany recept), search results a bookmarks
 export const state = {
@@ -16,17 +16,10 @@ export const state = {
 
 }
 
-// aktualizuje state co se tyce vybraneho receptu
-export const loadRecipe = async function(id) {
-try {
-  // fce getJOSN vraci promise, takze ji musime awaitovat
-  const data = await getJSON(`${API_URL}${id}`);
-  
+const createRecipeObject = function(data) {
   // destructuring property/objektu recipe
-  let {recipe} = data.data;
-
-  // preulozeni recipe do state
-  state.recipe = {
+  const {recipe} = data.data;
+  return {
     id: recipe.id,
     title: recipe.title,
     publisher: recipe.publisher,
@@ -34,8 +27,20 @@ try {
     image: recipe.image_url,
     servings: recipe.servings,
     cookingTime: recipe.cooking_time,
-    ingredients: recipe.ingredients
-  }
+    ingredients: recipe.ingredients,
+    // Short circuiting: jestlize recipe.key neexistuje, nic se nestane. Kdyz existuje, tak je vraceny objekt za &&, ktery je nasledne destrukturovan
+    ...(recipe.key && {key:recipe.key})
+  };
+}
+
+// aktualizuje state co se tyce vybraneho receptu
+export const loadRecipe = async function(id) {
+try {
+  // fce getJOSN vraci promise, takze ji musime awaitovat
+  const data = await AJAX(`${API_URL}${id}?key=${KEY}`);
+
+  // preulozeni recipe do state
+  state.recipe = createRecipeObject(data);
 
   // Overeni, jestli je recept mezi bookmarkovanymi. Toto je potreba napr. pro nasledne spavne zobrazeni bookmarkovaci ikony.
   if (state.bookmarks.some(bookmark => bookmark.id === id))
@@ -52,7 +57,7 @@ else state.recipe.bookmarked = false;
 export const loadSearchResults = async function(query) {
   try {
     state.search.query = query;
-    const data = await getJSON(`${API_URL}?search=${query}`);
+    const data = await AJAX(`${API_URL}?search=${query}&key=${KEY}`);
       
     // recipes jso pole, takze ho pomoci map prevedeme na pole vysledku hledani, ktere mame ve state (pouzivame stejne klice jako ve state.recipe)
     state.search.results = data.data.recipes.map(rec => {
@@ -60,7 +65,8 @@ export const loadSearchResults = async function(query) {
         id: rec.id,
         title: rec.title,
         publisher: rec.publisher,
-        image: rec.image_url
+        image: rec.image_url,
+        ...(rec.key && {key:rec.key})
       };
     }
     );
@@ -129,4 +135,57 @@ const init = function() {
 }
 
 init();
-console.log(state.bookmarks);
+// console.log(state.bookmarks);
+
+// Nahrani pridanych dat asynchronne do API
+export const uploadRecipe = async function (newRecipe) {
+  try {    
+    // newRecipe nema stejnou datovou strukturu, jako data z API, takze ho musime nejprve upravit
+  
+    //Nejprve si ho prevedeme na pole, abychom si mohli vyfiltovat polozky, ktere jsou vyplnene ingredience. Pak si ingredience, ktere zada uzivatel prevedeme na pole.
+    const ingredients = Object.entries(newRecipe)
+    .filter(entry => entry[0].startsWith('ingredient') && entry[1] !== '').map(ing => {const ingArr = ing[1].split(',').map(el => el.trim());
+       
+        // Pokud uzivatel zadal ingredience spatne, ma pole jinou delku nez 3. Vyhodime tedy chybu
+        if (ingArr.length !== 3) 
+          throw new Error('Wrong ingredients format! Please use the correct format according to the instructions in the input placeholder ;)');
+        
+          // Polozky z pole ingredinci si ulozime do promennych
+          const [quantity, unit, description] = ingArr;
+          // A vratime je v podobe objektu
+          return {quantity: quantity ? +quantity : null, unit, description};
+        
+        });
+        
+        const recipe = {
+          title: newRecipe.title,
+          source_url: newRecipe.sourceUrl,
+          image_url: newRecipe.image,
+          publisher: newRecipe.publisher,
+          cooking_time: +newRecipe.cookingTime,
+          servings: +newRecipe.servings,
+          ingredients,
+        };
+
+    
+
+        
+        // API nam recept posle zpatky
+        const data = await AJAX(`${API_URL}?key=${KEY}`, recipe);
+  
+
+         // preulozeni recipe do state
+        state.recipe = createRecipeObject(data);
+
+        addBookmark(state.recipe);
+        
+  } catch(err) {
+    throw err;
+  }
+
+};
+  
+  
+      
+
+

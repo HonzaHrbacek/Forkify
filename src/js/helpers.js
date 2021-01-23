@@ -11,11 +11,20 @@ const timeout = function (s) {
   });
 };
 
-// helper fce pro vraceni dat z fetche/vyhozeni chyby
-export const getJSON = async function(url) {
+// helper fce pro vraceni dat z fetche/vyhozeni chyby a pro nahrani dat do API 
+// pokud existuji upload data, tak nahravame do API, jinak z ni stahujeme data
+export const AJAX = async function (url, uploadData = undefined) {  
   try {
+    const fetchPro = uploadData ? fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(uploadData)
+    }) : fetch(url);
+
     // response bude prvni fulfilled promise; pokud se url nenacte do TIMEOUT_SEC sekund, tak zvitezi rejected promise timeout
-    const res = await Promise.race([fetch(url), timeout(TIMEOUT_SEC)]);
+    const res = await Promise.race([fetchPro, timeout(TIMEOUT_SEC)]);
             
     // odpoved si prectu pomoci metody json()
     const data = await res.json();
